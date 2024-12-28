@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tâm sự cùng Huy</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f0f2f5;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: #1a73e8;
+            margin-bottom: 10px;
+        }
+
+        .new-post-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s ease;
+        }
+
+        .new-post-btn:hover {
+            background-color: #1557b0;
+        }
+
+        .post-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .post-form.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            height: 120px;
+            resize: vertical;
+        }
+
+        .post {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .post-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+
+        .post-meta {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .post-content {
+            color: #444;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .pin-btn, .delete-btn, .edit-btn {
+            background-color: #1a73e8;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        .pin-btn:hover, .delete-btn:hover, .edit-btn:hover {
+            background-color: #1557b0;
+        }
+
+        .comment-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .comment-section h4 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .comment-form {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .comment-form input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .comment-form button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .comment-form button:hover {
+            background-color: #1557b0;
+        }
+
+        .comment {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .comment-content {
+            flex-grow: 1;
+        }
+
+        .comment span {
+            font-weight: bold;
+            color: #1a73e8;
+        }
+
+        .comment p {
+            margin-top: 5px;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .delete-comment-btn {
+            background-color: red;
+            color: white;
+            border: none;
+            padding: 3px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-comment-btn:hover {
+            background-color: darkred;
+        }
+
+        .pinned-badge {
+            background-color: #4CAF50;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Tâm sự cùng Huy</h1>
+            <p>Nơi chia sẻ những câu chuyện của Huy và của các bạn nhỏ</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <button class="new-post-btn" onclick="togglePostForm()">+ Chia sẻ câu chuyện mới</button>
+
+        <div class="post-form" id="postForm">
+            <div class="form-group">
+                <label for="name">Tên bạn nhỏ</label>
+                <input type="text" id="name" placeholder="Nhập tên của bạn...">
+            </div>
+            <div class="form-group">
+                <label for="title">Tiêu đề</label>
+                <input type="text" id="title" placeholder="Nhập tiêu đề bài viết...">
+            </div>
+            <div class="form-group">
+                <label for="content">Nội dung</label>
+                <textarea id="content" placeholder="Chia sẻ câu chuyện của bạn..."></textarea>
+            </div>
+            <button class="new-post-btn" onclick="submitPost()" id="submitButton">Đăng bài</button>
+        </div>
+
+        <div id="posts">
+            <!-- Bài viết được thêm động tại đây -->
+        </div>
+    </main>
+
+    <script>
+    
+    const PASSWORD = "122011qweqwe.A";
+        let posts = JSON.parse(localStorage.getItem('posts')) || [];
+        let likedPosts = new Set(JSON.parse(localStorage.getItem('likedPosts')) || []);
+        let editingPostId = null;
+
+        function togglePostForm() {
+            const form = document.getElementById('postForm');
+            form.classList.toggle('active');
+            if (!form.classList.contains('active')) {
+                clearForm();
+                editingPostId = null;
+                document.getElementById('submitButton').textContent = 'Đăng bài';
+            }
+        }
+
+        function getCurrentTimestamp() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            return `${hours}:${minutes}, ngày ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+        }
+
+        function submitPost() {
+            const name = document.getElementById('name').value.trim();
+            const title = document.getElementById('title').value.trim();
+            const content = document.getElementById('content').value.trim();
+
+            if (!name || !title || !content) {
+                alert('Vui lòng điền đầy đủ thông tin!');
+                return;
+            }
+
+            if (editingPostId) {
+                // Update existing post
+                const post = posts.find(p => p.id === editingPostId);
+                if (post) {
+                    post.name = name;
+                    post.title = title;
+                    post.content = content;
+                    post.editedAt = getCurrentTimestamp();
+                }
+                editingPostId = null;
+                document.getElementById('submitButton').textContent = 'Đăng bài';
+            } else {
+                // Create new post
+                const newPost = {
+                    id: Date.now(),
+                    name,
+                    title,
+                    content,
+                    timestamp: getCurrentTimestamp(),
+                    likes: 0,
+                    comments: [],
+                    pinned: false
+                };
+                posts.unshift(newPost);
+            }
+
+            savePosts();
+            renderPosts();
+            togglePostForm();
+            clearForm();
+        }
+
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('title').value = '';
+            document.getElementById('content').value = '';
+        }
+
+        function editPost(postId) {
+            const password = prompt('Nhập mật khẩu để chỉnh sửa bài:');
+            if (password === PASSWORD) {
+                const post = posts.find(p => p.id === postId);
+                if (post) {
+                    editingPostId = postId;
+                    document.getElementById('name').value = post.name;
+                    document.getElementById('title').value = post.title;
+                    document.getElementById('content').value = post.content;
+                    document.getElementById('submitButton').textContent = 'Cập nhật bài viết';
+                    const form = document.getElementById('postForm');
+                    form.classList.add('active');
+                    form.scrollIntoView({ behavior: 'smooth' });
+                }
+            } else {
+                alert('Mật khẩu không đúng!');
+            }
+        }
+
+        function likePost(postId) {
+            const post = posts.find(p => p.id === postId);
+            if (!post) return;
+
+            if (likedPosts.has(postId)) {
+                likedPosts.delete(postId);
+                post.likes--;
+            } else {
+                likedPosts.add(postId);
+                post.likes++;
+            }
+
+            savePosts();
+            localStorage.setItem('likedPosts', JSON.stringify([...likedPosts]));
+            renderPosts();
+        }
+
+        function deletePost(postId) {
+            const password = prompt('Nhập mật khẩu để xóa bài:');
+            if (password === PASSWORD) {
+                posts = posts.filter(p => p.id !== postId);
+                savePosts();
+                renderPosts();
+                alert('Bài viết đã được xóa!');
+            } else {
+                alert('Mật khẩu không đúng!');
+            }
+        }
+
+        function pinPost(postId) {
+            const password = prompt('Nhập mật khẩu để ghim/bỏ ghim bài:');
+            if (password === PASSWORD) {
+                const post = posts.find(p => p.id === postId);
+                if (post) {
+                    post.pinned = !post.pinned;
+                    // Re-sort posts: pinned posts first, then by original order
+                    posts.sort((a, b) => {
+                        if (a.pinned && !b.pinned) return -1;
+                        if (!a.pinned && b.pinned) return 1;
+                        return 0;
+                    });
+                    savePosts();
+                    renderPosts();
+                    alert(post.pinned ? 'Bài viết đã được ghim lên đầu!' : 'Đã bỏ ghim bài viết!');
+                }
+            } else {
+                alert('Mật khẩu không đúng!');
+            }
+        }
+
+        function deleteComment(postId, commentIndex) {
+            const password = prompt('Nhập mật khẩu để xóa bình luận:');
+            if (password === PASSWORD) {
+                const post = posts.find(p => p.id === postId);
+                if (post) {
+                    post.comments.splice(commentIndex, 1);
+                    savePosts();
+                    renderPosts();
+                    alert('Bình luận đã được xóa!');
+                }
+            } else {
+                alert('Mật khẩu không đúng!');
+            }
+        }
+
+        function addComment(postId) {
+            const commentInput = document.getElementById(`comment-input-${postId}`);
+            const comment = commentInput.value.trim();
+
+            if (!comment) {
+                alert('Vui lòng nhập nội dung bình luận!');
+                return;
+            }
+
+            const post = posts.find(p => p.id === postId);
+            if (post) {
+                post.comments.push({
+                    text: comment,
+                    timestamp: getCurrentTimestamp()
+                });
+                savePosts();
+                renderPosts();
+                commentInput.value = '';
+            }
+        }
+
+        function savePosts() {
+            localStorage.setItem('posts', JSON.stringify(posts));
+        }
+
+        function renderPosts() {
+            const postsContainer = document.getElementById('posts');
+            postsContainer.innerHTML = posts.map(post => `
+                <div class="post">
+                    <div class="post-header">
+                        <h2 class="post-title">
+                            ${post.title}
+                            ${post.pinned ? '<span class="pinned-badge">Đã ghim</span>' : ''}
+                        </h2>
+                        <span class="post-meta">${post.timestamp}</span>
+                    </div>
+                    <div class="post-meta">Đăng bởi: ${post.name}</div>
+                    <p class="post-content">${post.content}</p>
+                    ${post.editedAt ? `<div class="post-meta">Đã chỉnh sửa lúc: ${post.editedAt}</div>` : ''}
+                    <div class="post-actions">
+                        <button class="action-btn" onclick="likePost(${post.id})">
+                            ❤️ ${post.likes}
+                        </button>
+                        <button class="edit-btn" onclick="editPost(${post.id})">Chỉnh sửa</button>
+                        <button class="pin-btn" onclick="pinPost(${post.id})">${post.pinned ? 'Bỏ ghim' : 'Ghim bài'}</button>
+                        <button class="delete-btn" onclick="deletePost(${post.id})">Xóa bài</button>
+                    </div>
+                    <div class="comment-section">
+                        <h4>Bình luận (${post.comments.length}):</h4>
+                        ${post.comments.map((comment, index) => `
+                            <div class="comment">
+                                <div class="comment-content">
+                                    <span>Bạn nhỏ nào đó</span>
+                                    <p>${comment.text}</p>
+                                    <small class="post-meta">${comment.timestamp}</small>
+                                </div>
+                                <button class="delete-comment-btn" onclick="deleteComment(${post.id}, ${index})">
+                                    Xóa
+                                </button>
+                            </div>
+                        `).join('')}
+                        <div class="comment-form">
+                            <input type="text" id="comment-input-${post.id}" 
+                                placeholder="Nhập bình luận của bạn..."
+                                onkeypress="if(event.key === 'Enter') addComment(${post.id})">
+                            <button onclick="addComment(${post.id})">Bình luận</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Khởi tạo giao diện khi tải trang
+        renderPosts();
+
+    </script>
+</body>
+</html>
