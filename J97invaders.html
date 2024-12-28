@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chicken Invaders Complete</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #000;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #gameCanvas {
+            border: 2px solid #333;
+            background: #000033;
+        }
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 20px;
+        }
+        #gameMessage {
+            position: absolute;
+            color: white;
+            font-size: 48px;
+            text-align: center;
+            display: none;
+        }
+        .button {
+            position: absolute;
+            padding: 10px 20px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: none;
+            font-size: 16px;
+        }
+        #restartButton {
+            top: 60%;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Dùng( <- -> )để di chuyển, Space để bắn.    Score: 0</div>
+    <div id="gameMessage"></div>
+    <button id="restartButton" class="button">Play Again</button>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <audio id="backgroundMusic" loop>
+        <source src="./source/J97invaders/y2mate.com - Ariana Grande ft Ngô Lan Hương  Đi Giữa Trời Đom Đóm.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+        const gameMessage = document.getElementById('gameMessage');
+        const restartButton = document.getElementById('restartButton');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+
+        // Tải hình ảnh
+        const playerImage = new Image();
+        playerImage.src = 'https://i.imgflip.com/6oqutd.png'; // Đường dẫn tới ảnh player
+
+        const chickenImage = new Image();
+        chickenImage.src = 'https://i.pinimg.com/236x/42/81/7d/42817d5cf2e9edd03070e7848027725b.jpg?nii=t'; // Đường dẫn tới ảnh chicken
+
+        const sounds = {
+            shoot: new Audio('./source/J97invaders/y2mate.com - Cute Anime Girl Aha  Sound Effect for editing.mp3'), // Âm thanh bắn
+            explosion: new Audio('./source/J97invaders/y2mate.com - Yamete kudasai sound Funny Memes .mp3'), // Âm thanh nổ
+            victory: new Audio('./source/J97invaders/y2mate.com - Oh my god anime  Meme sound effect.mp3') // Âm thanh chiến thắng
+        };
+
+        let gameState = {
+            player: {
+                x: canvas.width / 2,
+                y: canvas.height - 60,
+                width: 50,
+                height: 50,
+                speed: 5
+            },
+            bullets: [],
+            chickens: [],
+            score: 0,
+            gameOver: false,
+            victory: false
+        };
+
+        function initGame() {
+            gameState = {
+                player: {
+                    x: canvas.width / 2,
+                    y: canvas.height - 60,
+                    width: 50,
+                    height: 50,
+                    speed: 5
+                },
+                bullets: [],
+                chickens: [],
+                score: 0,
+                gameOver: false,
+                victory: false
+            };
+
+            // Tạo đàn gà
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 3; j++) {
+                    gameState.chickens.push({
+                        x: i * 100 + 100,
+                        y: j * 70 + 50,
+                        width: 50,
+                        height: 50,
+                        speed: 1,
+                        direction: 1
+                    });
+                }
+            }
+
+            scoreElement.textContent = 'Dùng( <- -> )để di chuyển, Space để bắn.    Score: 0';
+            gameMessage.style.display = 'none';
+            restartButton.style.display = 'none';
+            backgroundMusic.play(); // Phát nhạc nền
+            gameLoop();
+        }
+
+        function drawPlayer() {
+            ctx.drawImage(playerImage, gameState.player.x - gameState.player.width / 2, gameState.player.y, gameState.player.width, gameState.player.height);
+        }
+
+        function drawBullets() {
+            ctx.fillStyle = 'yellow';
+            gameState.bullets.forEach(bullet => {
+                ctx.fillRect(bullet.x - 2, bullet.y, 4, 10);
+            });
+        }
+
+        function drawChickens() {
+            gameState.chickens.forEach(chicken => {
+                ctx.drawImage(chickenImage, chicken.x, chicken.y, chicken.width, chicken.height);
+            });
+        }
+
+        function checkCollisions() {
+            gameState.bullets.forEach((bullet, bulletIndex) => {
+                gameState.chickens.forEach((chicken, chickenIndex) => {
+                    if (bullet.x >= chicken.x &&
+                        bullet.x <= chicken.x + chicken.width &&
+                        bullet.y >= chicken.y &&
+                        bullet.y <= chicken.y + chicken.height) {
+                        sounds.explosion.cloneNode(true).play();
+                        gameState.bullets.splice(bulletIndex, 1);
+                        gameState.chickens.splice(chickenIndex, 1);
+                        gameState.score += 10;
+                        scoreElement.textContent = `Dùng( <- -> )để di chuyển, Space để bắn.   Score: ${gameState.score}`;
+                    }
+                });
+            });
+
+            if (gameState.chickens.length === 0) {
+                gameState.victory = true;
+                sounds.victory.play();
+                endGame('J97 đã bị tiêu diệt!', '#4CAF50');
+            }
+
+            gameState.chickens.forEach(chicken => {
+                if (chicken.y + chicken.height >= gameState.player.y) {
+                    gameState.gameOver = true;
+                    endGame('Game Over!', '#FF0000');
+                }
+            });
+        }
+
+        function update() {
+            gameState.bullets = gameState.bullets.filter(bullet => {
+                bullet.y -= 7;
+                return bullet.y > 0;
+            });
+
+            let hitWall = false;
+            gameState.chickens.forEach(chicken => {
+                chicken.x += chicken.speed * chicken.direction;
+                if (chicken.x <= 0 || chicken.x + chicken.width >= canvas.width) {
+                    hitWall = true;
+                }
+            });
+
+            if (hitWall) {
+                gameState.chickens.forEach(chicken => {
+                    chicken.direction *= -1;
+                    chicken.y += 20;
+                });
+            }
+
+            checkCollisions();
+        }
+
+        function endGame(message, color) {
+            gameMessage.style.display = 'block';
+            gameMessage.style.color = color;
+            gameMessage.textContent = message;
+            restartButton.style.display = 'block';
+            backgroundMusic.pause();
+        }
+
+        function gameLoop() {
+            if (gameState.gameOver || gameState.victory) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            update();
+            drawPlayer();
+            drawBullets();
+            drawChickens();
+            requestAnimationFrame(gameLoop);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (gameState.gameOver || gameState.victory) return;
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    gameState.player.x = Math.max(gameState.player.width / 2, gameState.player.x - gameState.player.speed);
+                    break;
+                case 'ArrowRight':
+                    gameState.player.x = Math.min(canvas.width - gameState.player.width / 2, gameState.player.x + gameState.player.speed);
+                    break;
+                case ' ':
+                    gameState.bullets.push({ x: gameState.player.x, y: gameState.player.y });
+                    sounds.shoot.cloneNode(true).play();
+                    break;
+            }
+        });
+
+        restartButton.addEventListener('click', initGame);
+
+        initGame();
+    </script>
+</body>
+</html>
