@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Running and Jumping Game</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: Arial, sans-serif;
+      }
+
+      canvas {
+        display: block;
+        background-color: #87ceeb; /* Sky blue */
+      }
+
+      #score {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        font-size: 20px;
+        color: #fff;
+      }
+
+      #gameOverPopup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border: 2px solid #000;
+        text-align: center;
+        z-index: 1000;
+      }
+
+      #gameOverPopup button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+
+      #overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+      }
+
+      #startButton {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 15px 30px;
+        font-size: 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 1001;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Nút bắt đầu -->
+    <button id="startButton" onclick="startGame()">Bắt đầu</button>
+
+    <!-- Nhạc nền -->
+    <audio id="backgroundMusic" loop>
+      <source src="./source/Negavrunout/y2mate.com - Thông Soái Ca Ma Gaming Boyband Mashup 2022 Tóp Tóp Cukak Remix.mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+
+    <!-- Nhạc khi nhân vật chết -->
+    <audio id="deathMusic">
+      <source src="./source/J97invaders/y2mate.com - Yamete kudasai sound Funny Memes .mp3" type="audio/mpeg" />
+      Your browser does not support the audio element.
+    </audio>
+
+    <div id="score">Bấm space để nhảy, Score: 0</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="overlay"></div>
+    <div id="gameOverPopup">
+      <p id="gameOverMessage">Oh no Negav đã bắt được bạn! Số khăn ướt bạn vượt qua được: 0</p>
+      <button onclick="restartGame()">Restart</button>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Phát nhạc nền
+      const backgroundMusic = document.getElementById("backgroundMusic");
+      backgroundMusic.volume = 0.5; // Giảm âm lượng nếu cần
+
+      const deathMusic = document.getElementById("deathMusic");
+
+      const playerImage = new Image();
+      playerImage.src =
+        "https://img.wattpad.com/c26afdb7f1dae6a158dde63adb1e78167189d3f3/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f776174747061642d6d656469612d736572766963652f53746f7279496d6167652f446a6336657069574a5a6a6142513d3d2d3632363435353634372e313535303935303939663337613037383736383437383834313635392e6a7067?s=fit&w=720&h=720";
+
+      const botImage = new Image();
+      botImage.src =
+        "https://up-pic.itoon.org/contribute/fiction/9467081/chatstory/51626505/1732799906.png-original600jpg?sign=73c0ec19a364e71dca317f8ab16a474f&t=6775d700";
+
+      const obstacleImage = new Image();
+      obstacleImage.src =
+        "https://nanotissue.com.vn/images/stories/virtuemart/product/da-nang-2021.png";
+
+      const backgroundBlockImage = new Image();
+      backgroundBlockImage.src =
+        "https://taphoammo.net/img/vieon-vip_323611.png";
+
+      let player = {
+        x: 150,
+        y: canvas.height - 150,
+        width: 80,
+        height: 80,
+        dy: 0,
+        isJumping: false,
+      };
+
+      let bot = {
+        x: 50,
+        y: canvas.height - 150,
+        width: 70,
+        height: 70,
+        speed: 2,
+      };
+
+      let obstacles = [];
+      let backgroundBlocks = [];
+      let score = 0;
+      let gameSpeed = 20;
+      let isGameOver = false;
+
+      const gravity = 0.5;
+
+      function drawPlayer() {
+        ctx.drawImage(playerImage, player.x, player.y, player.width, player.height);
+      }
+
+      function drawBot() {
+        ctx.drawImage(botImage, bot.x, bot.y, bot.width, bot.height);
+      }
+
+      function updateBot() {
+        if (!isGameOver) {
+          if (bot.x < player.x - 100) {
+            bot.x += bot.speed;
+          }
+          bot.y = canvas.height - bot.height; // Luôn đứng trên mặt đất
+        }
+      }
+
+      function drawObstacles() {
+        obstacles.forEach((obstacle) => {
+          ctx.drawImage(obstacleImage, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        });
+      }
+
+      function createObstacle() {
+        if (!isGameOver) {
+          const size = Math.random() * 50 + 50;
+          const obstacle = {
+            x: canvas.width,
+            y: canvas.height - size,
+            width: size / 1.5,
+            height: size,
+          };
+          obstacles.push(obstacle);
+        }
+      }
+
+      function drawBackgroundBlocks() {
+        backgroundBlocks.forEach((block) => {
+          ctx.drawImage(
+            backgroundBlockImage,
+            block.x,
+            block.y,
+            block.width,
+            block.height
+          );
+        });
+      }
+
+      function createBackgroundBlock() {
+        const block = {
+          x: canvas.width,
+          y: canvas.height - 200,
+          width: 100,
+          height: 100,
+        };
+        backgroundBlocks.push(block);
+      }
+
+      function updateBackgroundBlocks() {
+        backgroundBlocks.forEach((block, index) => {
+          block.x -= gameSpeed / 2;
+          if (block.x + block.width < 0) {
+            backgroundBlocks.splice(index, 1);
+          }
+        });
+      }
+
+      function updateObstacles() {
+        if (!isGameOver) {
+          obstacles.forEach((obstacle, index) => {
+            obstacle.x -= gameSpeed;
+            if (obstacle.x + obstacle.width < 0) {
+              obstacles.splice(index, 1);
+              score += 1;
+              document.getElementById("score").textContent = `Score: ${score}`;
+            }
+          });
+        }
+      }
+
+      function detectCollision() {
+        for (let obstacle of obstacles) {
+          if (
+            player.x < obstacle.x + obstacle.width &&
+            player.x + player.width > obstacle.x &&
+            player.y < obstacle.y + obstacle.height &&
+            player.y + player.height > obstacle.y
+          ) {
+            showGameOverPopup();
+          }
+        }
+      }
+
+      function jump() {
+        if (!player.isJumping && !isGameOver) {
+          player.dy = -12;
+          player.isJumping = true;
+        }
+      }
+
+      function updatePlayer() {
+        if (!isGameOver) {
+          player.y += player.dy;
+          if (player.y + player.height < canvas.height) {
+            player.dy += gravity;
+          } else {
+            player.y = canvas.height - player.height;
+            player.isJumping = false;
+          }
+        }
+      }
+
+      function showGameOverPopup() {
+        isGameOver = true;
+
+        // Dừng nhạc nền
+        backgroundMusic.pause();
+        backgroundMusic.currentTime = 0;
+
+        // Phát nhạc "nhân vật chết"
+        deathMusic.play();
+
+        // Hiển thị thông báo game over
+        const popup = document.getElementById("gameOverPopup");
+        const overlay = document.getElementById("overlay");
+        document.getElementById("gameOverMessage").textContent = `Oh no Negav đã bắt được bạn! Số khăn ướt bạn vượt qua được: ${score}`;
+        popup.style.display = "block";
+        overlay.style.display = "block";
+      }
+
+      function restartGame() {
+        location.reload();
+      }
+
+      function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drawPlayer();
+        drawBot();
+        drawObstacles();
+        drawBackgroundBlocks();
+
+        updatePlayer();
+        updateBot();
+        updateObstacles();
+        updateBackgroundBlocks();
+        detectCollision();
+
+        if (!isGameOver) {
+          requestAnimationFrame(gameLoop);
+        }
+      }
+
+      function startGame() {
+        const startButton = document.getElementById("startButton");
+        startButton.style.display = "none";
+        backgroundMusic.play();
+
+        createObstacle();
+        setInterval(createObstacle, 2000);
+        setInterval(createBackgroundBlock, 5000);
+
+        gameLoop();
+      }
+
+      window.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          jump();
+        }
+      });
+
+      window.addEventListener("click", () => {
+        jump();
+      });
+    </script>
+  </body>
+</html>
