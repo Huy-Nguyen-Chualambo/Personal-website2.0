@@ -278,62 +278,39 @@
         document.getElementById("gameOverMessage").textContent = `Oh no Negav đã bắt được bạn! Số khăn ướt bạn vượt qua được: ${score}`;
         popup.style.display = "block";
         overlay.style.display = "block";
-
-        // Dừng game loop
-        cancelAnimationFrame(animationId);
       }
 
       function restartGame() {
-        isGameOver = false;
-        score = 0;
-        obstacles = [];
-        backgroundBlocks = [];
-        player.y = canvas.height - player.height;
-        player.dy = 0;
-        bot.x = 50;
-
-        // Dừng nhạc "nhân vật chết" và phát lại nhạc nền
-        deathMusic.pause();
-        deathMusic.currentTime = 0;
-        backgroundMusic.play();
-
-        // Cập nhật giao diện
-        document.getElementById("score").textContent = `Bấm space để nhảy, Score: ${score}`;
-        document.getElementById("gameOverPopup").style.display = "none";
-        document.getElementById("overlay").style.display = "none";
-
-        // Bắt đầu lại game loop
-        gameLoop();
+        location.reload();
       }
 
       function gameLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        updatePlayer();
-        updateBot();
-        updateObstacles();
-        updateBackgroundBlocks();
-
-        detectCollision();
 
         drawPlayer();
         drawBot();
         drawObstacles();
         drawBackgroundBlocks();
 
+        updatePlayer();
+        updateBot();
+        updateObstacles();
+        updateBackgroundBlocks();
+        detectCollision();
+
         if (!isGameOver) {
-          animationId = requestAnimationFrame(gameLoop);
+          requestAnimationFrame(gameLoop);
         }
       }
 
       function startGame() {
-        document.getElementById("startButton").style.display = "none";
-
-        // Bắt đầu nhạc nền
+        const startButton = document.getElementById("startButton");
+        startButton.style.display = "none";
         backgroundMusic.play();
 
+        createObstacle();
         setInterval(createObstacle, 2000);
-        setInterval(createBackgroundBlock, 3000);
+        setInterval(createBackgroundBlock, 5000);
 
         gameLoop();
       }
@@ -342,6 +319,10 @@
         if (e.code === "Space") {
           jump();
         }
+      });
+
+      window.addEventListener("click", () => {
+        jump();
       });
     </script>
   </body>
